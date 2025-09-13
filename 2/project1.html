@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Project 1 - Images of the Russian Empire</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', Arial, sans-serif;
+            margin: 0;
+            background: #fff;
+            color: #002676;
+        }
+
+        .header {
+            background: #002676;
+            color: #fff;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 32px auto;
+            padding: 0 16px;
+        }
+
+        .hero {
+            background: #FDB515;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        .hero h1 {
+            margin: 0 0 8px 0;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .gallery img {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+            border-radius: 8px;
+            border: 3px solid #fff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            display: block;
+        }
+
+        .section h2 {
+            margin-top: 32px;
+            margin-bottom: 8px;
+            border-left: 6px solid #FDB515;
+            padding-left: 10px;
+        }
+
+        .section p {
+            line-height: 1.6;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 14px;
+        }
+
+        thead th {
+            text-align: left;
+            border-bottom: 2px solid #002676;
+            padding: 8px 6px;
+        }
+
+        tbody td {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 8px 6px;
+        }
+
+        .note {
+            background: #f7fafc;
+            border: 1px dashed #cbd5e0;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-top: 10px;
+            color: #1f3a8a;
+        }
+
+        .back {
+            display: inline-block;
+            margin-top: 16px;
+            color: #002676;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .imggrid3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        figure {
+            margin: 0;
+            text-align: center;
+        }
+
+        figure img {
+            max-width: 100%;
+            height: auto;
+            object-fit: contain;
+            border-radius: 8px;
+            border: 3px solid #fff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        figcaption {
+            margin-top: 6px;
+            font-size: 13px;
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        .offsets {
+            font-size: 12px;
+            color: #334155;
+            margin-top: 4px;
+            line-height: 1.35;
+        }
+
+        .offsets code {
+            background: #f1f5f9;
+            padding: 0 4px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div>Project 1: Images of the Russian Empire</div>
+        <div>DetachWu</div>
+    </div>
+
+    <div class="container">
+        <div class="hero">
+            <h1>Images of the Russian Empire</h1>
+            <p>The goal of this assignment is to take the digitized Prokudin-Gorskii glass plate images and, using image
+                processing techniques, automatically produce a color image with as few visual artifacts as possible. In
+                order to do this, you will need to extract the three color channel images, place them on top of each
+                other, and align them so that they form a single RGB color image.</p>
+        </div>
+
+        <section id="approach-part1" class="section">
+            <h2>Approach — Part 1: Single-Scale Alignment</h2>
+            <p>
+                <b>Input split.</b> Each plate is vertically divided into three equal-height slices as <b>B</b>,
+                <b>G</b>, <b>R</b>
+                (top→bottom). Images are converted to <code>float</code> and normalized to [0,1] when the original max
+                &gt; 1.5.
+            </p>
+            <p>
+                <b>Model.</b> Pure integer translation in x/y. We align <b>G</b> and <b>R</b> to <b>B</b>.
+            </p>
+            <p>
+                <b>Search (exhaustive).</b> For small images, we brute-force shifts in <code>[-15,15]</code> pixels
+                along both axes.
+                For each candidate (dy, dx), we shift the moving channel via <code>np.roll</code>.
+            </p>
+            <p>
+                <b>Scoring.</b> We score alignment on the <i>interior region</i> only (a small border crop), using
+                either
+                <b>SSD</b> (sum of squared differences) or <b>NCC</b> (zero-mean normalized cross-correlation). The
+                metric is
+                user-selectable; SSD minimizes squared residuals, while NCC maximizes correlation (implemented as
+                minimizing
+                negative NCC). Cropping is used <i>only for scoring</i>; we do not crop when composing the final RGB.
+            </p>
+            <p>
+                <b>Compose.</b> After estimating displacements for <b>G</b> and <b>R</b>, we stack as
+                <code>[R, G, B]</code> to
+                form the color image.
+            </p>
+        </section>
+
+        <section id="part1" class="section">
+            <h2>Part 1 — Results (Single-Scale)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>G (dy, dx)</th>
+                        <th>R (dy, dx)</th>
+                        <th>Metric / Mode</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>cathedral.jpg</td>
+                        <td>dy=5, dx=2</td>
+                        <td>dy=12, dx=3</td>
+                        <td>SSD or NCC / single</td>
+                        <td>0.85 s</td>
+                    </tr>
+                    <tr>
+                        <td>monastery.jpg</td>
+                        <td>dy=-3, dx=2</td>
+                        <td>dy=3, dx=2</td>
+                        <td>SSD or NCC / single</td>
+                        <td>0.84 s</td>
+                    </tr>
+                    <tr>
+                        <td>tobolsk.jpg</td>
+                        <td>dy=3, dx=3</td>
+                        <td>dy=6, dx=3</td>
+                        <td>SSD or NCC / single</td>
+                        <td>0.87 s</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="imggrid3">
+                <figure>
+                    <img src="./media/cathedral.jpg" alt="cathedral">
+                    <figcaption>cathedral</figcaption>
+                </figure>
+                <figure>
+                    <img src="./media/monastery.jpg" alt="monastery">
+                    <figcaption>monastery</figcaption>
+                </figure>
+                <figure>
+                    <img src="./media/tobolsk.jpg" alt="tobolsk">
+                    <figcaption>tobolsk</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <section id="approach-part2" class="section">
+            <h2>Approach — Part 2: Image Pyramid</h2>
+            <p><b>Why a pyramid.</b> On big images the true shift can be large, and trying every shift at full
+                resolution is slow. The pyramid solves this by aligning at low resolution first, then refining at higher
+                resolutions.</p>
+            <p><b>How I make smaller levels.</b> I call Gaussian Blur to shrink by 2× each time. In code,
+                I first apply a tiny 3×3 blur
+                <code>[[1,2,1],[2,4,2],[1,2,1]]/16</code> (to avoid aliasing) and then takes every other pixel
+                <code>[::2, ::2]</code>.
+            </p>
+            <p><b>When to stop going smaller.</b> If the shorter side ≤ <code>min_side</code> (I use <b>500</b>), I stop
+                shrinking and run the same single-scale search there (window <b>15</b>).</p>
+            <p><b>How I come back up.</b> The shift found on the small image is multiplied by 2 (because the image size
+                doubles) and used as the starting guess on the next larger level.</p>
+            <p><b>Refine at each level.</b> Around that guess I only search a tiny window <b>±3</b> pixels on both axes.
+                Scoring still uses an interior crop (Part 2 uses <code>crop_frac=0.12</code>) and the chosen metric
+                (<code>ssd</code> or <code>ncc</code>). The actual shifting is still done with <code>np.roll</code>.</p>
+            <p><b>Finish.</b> After refining back to full resolution, I have the final integer shifts for <b>G→B</b> and
+                <b>R→B</b>. I apply them and stack <code>[R, G, B]</code>. Total runtime is measured from program start
+                to when the output image is saved.
+            </p>
+            <p><b>Parameters used in my runs.</b> <code>base_win=15</code>, <code>min_side=500</code>,
+                <code>refine=±3</code>, scoring crop <code>0.12</code>, metric selectable (<code>ssd</code> or
+                <code>ncc</code>).
+            </p>
+        </section>
+
+        <section id="part2" class="section">
+            <h2>Part 2 — Results (Pyramid)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>G (dy, dx)</th>
+                        <th>R (dy, dx)</th>
+                        <th>Metric / Levels</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>church.tif</td>
+                        <td>dy=25, dx=4</td>
+                        <td>dy=58, dx=-4</td>
+                        <td>NCC or SSD / pyr</td>
+                        <td>10.65 s</td>
+                    </tr>
+                    <tr>
+                        <td>harvesters.tif</td>
+                        <td>dy=60, dx=17</td>
+                        <td>dy=124, dx=13</td>
+                        <td>NCC or SSD / pyr</td>
+                        <td>10.57 s</td>
+                    </tr>
+                    <tr>
+                        <td>icon.tif</td>
+                        <td>dy=41, dx=17</td>
+                        <td>dy=89, dx=23</td>
+                        <td>NCC or SSD / pyr</td>
+                        <td>10.47 s</td>
+                    </tr>
+                    <tr>
+                        <td>italil.tif</td>
+                        <td>dy=38, dx=21</td>
+                        <td>dy=77, dx=35</td>
+                        <td>NCC or SSD / pyr</td>
+                        <td>10.79 s</td>
+                    </tr>
+                    <tr>
+                        <td>lastochikino.tif</td>
+                        <td>dy=-3, dx=-2</td>
+                        <td>dy=75, dx=-9</td>
+                        <td>NCC or SSD / pyr</td>
+                        <td>11.84 s</td>
+                    </tr>
+                    <tr>
+                        <td>lugano.tif</td>
+                        <td>dy=41, dx=-16</td>
+                        <td>dy=93, dx=-29</td>
+                        <td>NCC or SSD / pyr</td>
+                        <td>11.99 s</td>
+                    </tr>
+                    <tr>
+                        <td>siren.tif</td>
+                        <td>dy=49, dx=-6</td>
+                        <td>dy=96, dx=-25</td>
+                        <td>NCC or SSD / pyr</td>
+                        <td>12.64 s</td>
+                    </tr>
+                    <tr>
+                        <td>three_generations.tif</td>
+                        <td>dy=53, dx=14</td>
+                        <td>dy=111, dx=11</td>
+                        <td>NCC or SSD / pyr</td>
+                        <td>10.43 s</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="imggrid3">
+                <figure>
+                    <img src="./media/church.jpg" alt="church">
+                    <figcaption>church</figcaption>
+                </figure>
+                <figure>
+                    <img src="./media/harvesters.jpg" alt="harvesters">
+                    <figcaption>harvesters</figcaption>
+                </figure>
+                <figure>
+                    <img src="./media/icon.jpg" alt="icon">
+                    <figcaption>icon</figcaption>
+                </figure>
+            </div>
+            <div class="imggrid3">
+                <figure>
+                    <img src="./media/italil.jpg" alt="italil">
+                    <figcaption>italil</figcaption>
+                </figure>
+                <figure>
+                    <img src="./media/lastochikino.jpg" alt="lastochikino">
+                    <figcaption>lastochikino</figcaption>
+                </figure>
+                <figure>
+                    <img src="./media/lugano.jpg" alt="lugano">
+                    <figcaption>lugano</figcaption>
+                </figure>
+            </div>
+            <div class="imggrid3">
+                <figure>
+                    <img src="./media/three_generations.jpg" alt="three_generations">
+                    <figcaption>three_generations</figcaption>
+                </figure>
+                <figure>
+                    <img src="./media/siren.jpg" alt="siren">
+                    <figcaption>siren</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <section id="problem" class="section">
+            <h2>Problems & Fixes</h2>
+
+            <h3>A. Large shift & wraparound bias — <i>melons</i>, <i>self_portrait</i></h3>
+            <p><b>What went wrong probably:</b></p>
+            <ul>
+                <li>The green/red images are shifted <b>a lot</b> vertically (about <b>170–180 px</b>). My original
+                    search range wasn’t big enough to find that shift.</li>
+                <li>When I tested shifts with <code>np.roll</code>, pixels that moved off one side <b>reappeared on the
+                        other side</b>. Those “rolled” edges sometimes fooled the match score.</li>
+                <li>Thick borders/black bands near the edges also confused the score.</li>
+            </ul>
+            <p><b>How I fixed it:</b></p>
+            <ul>
+                <li><b>Score only on the real overlap region</b> after shifting (no wraparound in scoring). I take the
+                    intersection of the two images and compute the metric there.</li>
+                <li><b>Adaptive coarse window</b> in the pyramid to cover ~<b>8% of the short side</b> (≥ ~200 px at
+                    full-res), so large shifts are reachable.</li>
+                <li><b>Small interior crop</b> inside the overlap (<code>crop_frac ≈ 0.12–0.20</code>) to ignore
+                    borders.</li>
+                <li>Use <code>np.roll</code> only when <b>composing</b> the final RGB image (safe after alignment is
+                    decided).</li>
+            </ul>
+
+            <p><b>Before</b></p>
+            <div class="imggrid3">
+                <figure>
+                    <img src="./media/melons.jpg" alt="melons (before)">
+                    <figcaption>melons (before)</figcaption>
+                    <div class="offsets">
+                        <div>G: dy=81, dx=10</div>
+                        <div>R: dy=141, dx=13</div>
+                    </div>
+                </figure>
+                <figure>
+                    <img src="./media/self_portrait.jpg" alt="self_portrait (before)">
+                    <figcaption>self_portrait (before)</figcaption>
+                    <div class="offsets">
+                        <div>G: dy=79, dx=29</div>
+                        <div>R: dy=141, dx=34</div>
+                    </div>
+                </figure>
+            </div>
+
+            <p><b>After fix</b></p>
+            <div class="imggrid3">
+                <figure>
+                    <img src="./media/melons_fixed.jpg" alt="melons (after)">
+                    <figcaption>melons (after)</figcaption>
+                    <div class="offsets">
+                        <div>G: dy=80, dx=10</div>
+                        <div>R: dy=177, dx=13</div>
+                    </div>
+                </figure>
+                <figure>
+                    <img src="./media/self_portrait_fixed.jpg" alt="self_portrait (after)">
+                    <figcaption>self_portrait (after)</figcaption>
+                    <div class="offsets">
+                        <div>G: dy=78, dx=29</div>
+                        <div>R: dy=176, dx=37</div>
+                    </div>
+                </figure>
+            </div>
+
+            <hr style="margin:24px 0; border:none; border-top:1px solid #e5e7eb;">
+
+            <h3>B. Cross-channel intensity mismatch — <i>emir</i></h3>
+            <p><b>What went wrong probably:</b></p>
+            <ul>
+                <li>The three channels have very different <b>brightness/contrast</b> (e.g., clothing and decorations
+                    dominate different channels).</li>
+                <li>Raw-pixel <b>SSD/NCC</b> is misled by intensity scaling, aligning bright blocks rather than the same
+                    structures.</li>
+            </ul>
+            <p><b>How I fixed it:</b></p>
+            <ul>
+                <li><b>Structural matching with Sobel:</b> compute edge-magnitude maps per channel and run
+                    <b>NCC/SSD</b> on those edges. This aligns structures instead of raw intensities.
+                </li>
+                <li>Keep the pyramid + ±3 refinement at the top level and the small interior crop for robust scoring.
+                </li>
+            </ul>
+
+            <p><b>Before / After fix</b></p>
+            <div class="imggrid3">
+                <figure>
+                    <img src="./media/emir.jpg" alt="emir (before)">
+                    <figcaption>emir (before)</figcaption>
+                    <div class="offsets">
+                        <div>G: dy=49, dx=24</div>
+                        <div>R: dy=103, dx=57</div>
+                    </div>
+                </figure>
+                <figure>
+                    <img src="./media/emir_fixed.jpg" alt="emir (after)">
+                    <figcaption>emir (after)</figcaption>
+                    <div class="offsets">
+                        <div>G: dy=49, dx=23</div>
+                        <div>R: dy=107, dx=40</div>
+                    </div>
+                </figure>
+            </div>
+        </section>
+
+        <section id="part3" class="section">
+            <h2>Part 3 — Colorize My Own Pictures</h2>
+
+            <div class="imggrid3">
+                <figure>
+                    <img src="./media/river.jpg" alt="river">
+                    <figcaption>river</figcaption>
+                </figure>
+                <figure>
+                    <img src="./media/statue.jpg" alt="statue">
+                    <figcaption>statue</figcaption>
+                </figure>
+                <figure>
+                    <img src="./media/house.jpg" alt="house">
+                    <figcaption>house</figcaption>
+                </figure>
+            </div>
+        </section>
+
+
+        <a class="back" href="../index.html">← Back to Portfolio</a>
+    </div>
+</body>
+
+</html>
