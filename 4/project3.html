@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Project 3 - Image Mosaics</title>
+	<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
+	<style>
+		body {
+			font-family: 'Montserrat', Arial, sans-serif;
+			margin: 0;
+			background: #fff;
+			color: #002676;
+		}
+
+		.header {
+			background: #002676;
+			color: #fff;
+			padding: 16px 24px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+
+		.container {
+			max-width: 900px;
+			margin: 32px auto;
+			padding: 0 16px;
+		}
+
+		.hero {
+			background: #FDB515;
+			padding: 20px;
+			border-radius: 12px;
+			box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+		}
+
+		.hero h1 {
+			margin: 0 0 8px 0;
+		}
+
+		.section {
+			margin: 28px 0;
+		}
+
+		.section h2 {
+			margin-top: 18px;
+			margin-bottom: 8px;
+			border-left: 6px solid #FDB515;
+			padding-left: 10px;
+		}
+
+		.deliverables {
+			background: #f7fafc;
+			border: 1px dashed #cbd5e0;
+			border-radius: 8px;
+			padding: 12px;
+			color: #1f3a8a;
+			margin-top: 8px;
+		}
+
+		.image {
+			text-align: center;
+			margin: 12px 0;
+		}
+
+		.image img {
+			max-width: 100%;
+			height: auto;
+			border-radius: 8px;
+			border: 3px solid #fff;
+			box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+		}
+
+		.imggrid2 {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 12px;
+			margin-top: 12px;
+		}
+
+		.imggrid3 {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 12px;
+			margin-top: 12px;
+		}
+
+        .imggrid4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+		/* match project2 layout for figure/image styles */
+		figure {
+			margin: 0;
+			text-align: center;
+		}
+
+		figure img {
+			max-width: 100%;
+			height: auto;
+			object-fit: contain;
+			border-radius: 8px;
+			border: 3px solid #fff;
+			box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+			display: block;
+			margin-left: auto;
+			margin-right: auto;
+		}
+
+		figcaption {
+			margin-top: 6px;
+			font-size: 13px;
+			color: #0f172a;
+			font-weight: 600;
+		}
+
+		/* optional helpers used in project2 for fixed-height grids */
+		.equal-height img {
+			height: 300px;
+			object-fit: cover;
+		}
+
+		.equal-height-short img {
+			height: 200px;
+			object-fit: cover;
+		}
+
+		code {
+			background: #f1f5f9;
+			padding: 2px 4px;
+			border-radius: 4px;
+			font-size: 0.9em;
+		}
+
+		.note {
+			margin-top: 10px;
+			color: #334155;
+			font-size: 0.95rem;
+		}
+
+		.back {
+			display: inline-block;
+			margin-top: 16px;
+			color: #002676;
+			text-decoration: none;
+			font-weight: 700;
+		}
+	</style>
+	<!-- MathJax for rendering LaTeX equations in the page -->
+	<script>
+		window.MathJax = {
+			tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+			svg: { fontCache: 'global' }
+		};
+	</script>
+	<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+
+<body>
+	<div class="header">
+		<div>Project 3: Image Mosaics</div>
+		<div>DetachWu</div>
+	</div>
+
+	<div class="container">
+		<div class="hero">
+			<h1>IMAGE WARPING and MOSAICING</h1>
+		</div>
+
+        <section id="Overview" class="section">
+			<h2>Part A</h2>
+			<p>The goal of this assignment is to get your hands dirty in different aspects of image warping with a “cool” application -- image mosaicing. You will take two or more photographs and create an image mosaic by registering, projective warping, resampling, and compositing them. Along the way, you will learn how to compute homographies, and how to use them to warp images.<br>
+<br>
+The steps of the assignment are:<br>
+
+A.1: Shoot and digitize pictures (20 pts)<br>
+A.2: Recover homographies (20 pts)<br>
+A.3: Warp the images (20 pts) [produce at least two examples of rectified images]<br>
+A.4: Blend images into a mosaic (20 pts) [show source images and results for three mosaics.]<br>
+A.5: Bells and Whistles (Mandatory for CS280A)<br>
+<br>
+There are some built in functions that are able to do much of what is needed. However, we want you to write your own code. Therefore, you are not allowed to use the following functions in your solution: <code>cv2.findHomography, cv2.warpPerspective, cv2.getPerspectiveTransform, skimage.transform.ProjectiveTransform, skimage.transform.warp</code>, and similar high-level homography or warping functions. On the other hand, there are a number of very helpful functions (e.g. for solving linear systems, inverting matrices, etc) that you are welcome to use. If there is a question whether a particular function is allowed, ask us.</p>
+		</section>
+
+		<!-- A.1 -->
+		<section id="a1" class="section">
+			<h2>A.1: Shoot the Pictures</h2>
+			<div class="deliverables">
+				<ul>
+					<li>Show at least 2 sets of images with projective transformations between them (fixed center of
+						projection, rotate camera).</li>    
+				</ul>
+			</div>
+
+			<div class="imggrid4">
+				<figure>
+					<img src="./media/Kitchen_1.jpg" alt="im1" />
+					<figcaption>Kitchen_1</figcaption>
+				</figure>
+				<figure>
+					<img src="./media/Kitchen_2.jpg" alt="im2" />
+					<figcaption>Kitchen_2</figcaption>
+				</figure>
+                <figure>
+                    <img src="./media/Tower_1.jpg" alt="im3" />
+                    <figcaption>Tower_1</figcaption>
+                </figure>
+                <figure>
+                    <img src="./media/Tower_2.jpg" alt="im4" />
+                    <figcaption>Tower_2</figcaption>
+                </figure>
+			</div>
+		</section>
+
+		<!-- A.2 -->
+		<section id="a2" class="section">
+			<h2>A.2: Recover Homographies</h2>
+			<div class="deliverables">
+				<ul>
+					<li>Implement <code>computeH(im1_pts, im2_pts)</code> function.</li>
+					<li>Show your correspondences visualized on the images, system of equations, and recovered homography matrix.</li>
+				</ul>
+			</div>
+
+			<div class="imggrid2">
+		                <figure>
+		                    <img src="./media/Kitchen_1_Kitchen_2.png" alt="Kitchen_1 ↔ Kitchen_2" />
+		                    <figcaption>Kitchen_1 ↔ Kitchen_2</figcaption>
+		                </figure>
+		                <figure>
+		                    <img src="./media/Tower_1_Tower_2.png" alt="Tower_1 ↔ Tower_2" />
+		                    <figcaption>Tower_1 ↔ Tower_2</figcaption>
+		                </figure>
+			</div>
+
+			<div class="note">
+				<p>Consider a point \(\mathbf{p}_1 = [x_1, y_1, 1]^T\) in image 1 and its corresponding point \(\mathbf{p}_2 = [x_2, y_2, 1]^T\) in image 2. Their relation is given by a projective transform:</p>
+				<div class="math">$$\mathbf{p}_2 \approx H\,\mathbf{p}_1$$</div>
+				<p>The homography matrix \(H\) can be written as</p>
+				<div class="math">$$H=\begin{bmatrix}h_{00} & h_{01} & h_{02}\\[4pt] h_{10} & h_{11} & h_{12}\\[4pt] h_{20} & h_{21} & 1\end{bmatrix}$$</div>
+				<p>Here we fix the bottom-right entry to 1 (homogeneous normalization). Expanding the homogeneous relation gives</p>
+				<div class="math">$$\begin{bmatrix}x_2\\[4pt] y_2\\[4pt] 1\end{bmatrix} \approx
+	\begin{bmatrix}h_{00} & h_{01} & h_{02}\\[4pt] h_{10} & h_{11} & h_{12}\\[4pt] h_{20} & h_{21} & 1\end{bmatrix}
+	\begin{bmatrix}x_1\\[4pt] y_1\\[4pt] 1\end{bmatrix}.$$</div>
+				<p>In coordinates this yields the nonlinear equations</p>
+				<div class="math">$$x_2=\dfrac{h_{00}x_1+h_{01}y_1+h_{02}}{h_{20}x_1+h_{21}y_1+1},\qquad
+	y_2=\dfrac{h_{10}x_1+h_{11}y_1+h_{12}}{h_{20}x_1+h_{21}y_1+1}.$$</div>
+				<p>The denominators introduce nonlinearity. To obtain a linear system in the unknown homography entries, multiply both equations by the denominator:</p>
+				<div class="math">$$x_2(h_{20}x_1+h_{21}y_1+1)=h_{00}x_1+h_{01}y_1+h_{02},$$
+	$$y_2(h_{20}x_1+h_{21}y_1+1)=h_{10}x_1+h_{11}y_1+h_{12}.$$</div>
+				<p>Rearranging gives two linear equations in the unknowns \(h_{00},h_{01},\dots,h_{21}\):</p>
+				<div class="math">$$h_{00}x_1+h_{01}y_1+h_{02}-x_2h_{20}x_1-x_2h_{21}y_1=x_2,$$
+	$$h_{10}x_1+h_{11}y_1+h_{12}-y_2h_{20}x_1-y_2h_{21}y_1=y_2.$$</div>
+				<p>I display the system of equations in the form:</p>
+				<div class="math">$$A\,\mathbf{h}=\mathbf{b},$$</div>
+				<p>where \(\mathbf{A}\) is the coefficient matrix derived from input points, \(\mathbf{h}=[h_{00},h_{01},\dots,h_{21}]^T\) (with \(h_{22}=1\) fixed) and \(\mathbf{b}\) contains the \(x_2,y_2\) values.</p>
+                <p><strong>For Kitchen_1 and Kitchen_2, the system of equations is displayed as follows (augmented matrix \([\mathbf{A} | \mathbf{b}]\)): </strong> </p>
+				<div class="math">$$\begin{bmatrix}
+	677.000 & 1062.000 & 1.000 & 0.000 & 0.000 & 0.000 & -50775.000 & -79650.000 & 75.000 \\
+	0.000 & 0.000 & 0.000 & 677.000 & 1062.000 & 1.000 & -757563.000 & -1188378.000 & 1119.000 \\
+	679.000 & 1593.000 & 1.000 & 0.000 & 0.000 & 0.000 & -50925.000 & -119475.000 & 75.000 \\
+	0.000 & 0.000 & 0.000 & 679.000 & 1593.000 & 1.000 & -1150226.000 & -2698542.000 & 1694.000 \\
+	1021.000 & 1029.000 & 1.000 & 0.000 & 0.000 & 0.000 & -445156.000 & -448644.000 & 436.000 \\
+	0.000 & 0.000 & 0.000 & 1021.000 & 1029.000 & 1.000 & -1080218.000 & -1088682.000 & 1058.000 \\
+	1025.000 & 1483.000 & 1.000 & 0.000 & 0.000 & 0.000 & -445875.000 & -645105.000 & 435.000 \\
+	0.000 & 0.000 & 0.000 & 1025.000 & 1483.000 & 1.000 & -1545700.000 & -2236364.000 & 1508.000 \\
+	1019.000 & 234.000 & 1.000 & 0.000 & 0.000 & 0.000 & -432056.000 & -99216.000 & 424.000 \\
+	0.000 & 0.000 & 0.000 & 1019.000 & 234.000 & 1.000 & -289396.000 & -66456.000 & 284.000 \\
+	1015.000 & 699.000 & 1.000 & 0.000 & 0.000 & 0.000 & -434420.000 & -299172.000 & 428.000 \\
+	0.000 & 0.000 & 0.000 & 1015.000 & 699.000 & 1.000 & -747040.000 & -514464.000 & 736.000 \end{bmatrix}.$$</div>
+                <div class="math">$$H=\begin{bmatrix}1.357067 & -0.003639 & -827.110674\\[4pt] 0.227475 & 1.242724 & -153.103573\\[4pt] 0.000298 & -0.00002 & 1\end{bmatrix}$$</div>
+				<p><strong>For Tower_1 and Tower_2, the system of equations is displayed as follows (augmented matrix \([\mathbf{A} | \mathbf{b}]\)): </strong> </p>
+				<div class="math">$$\begin{bmatrix}
+		590.000 & 234.000 & 1.000 & 0.000 & 0.000 & 0.000 & -346920.000 & -137592.000 & 588.000 \\
+		0.000 & 0.000 & 0.000 & 590.000 & 234.000 & 1.000 & -464330.000 & -184158.000 & 787.000 \\
+		598.000 & 230.000 & 1.000 & 0.000 & 0.000 & 0.000 & -355810.000 & -136850.000 & 595.000 \\
+		0.000 & 0.000 & 0.000 & 598.000 & 230.000 & 1.000 & -470028.000 & -180780.000 & 786.000 \\
+		591.000 & 267.000 & 1.000 & 0.000 & 0.000 & 0.000 & -348099.000 & -157263.000 & 589.000 \\
+		0.000 & 0.000 & 0.000 & 591.000 & 267.000 & 1.000 & -480483.000 & -217071.000 & 813.000 \\
+		597.000 & 265.000 & 1.000 & 0.000 & 0.000 & 0.000 & -355812.000 & -157940.000 & 596.000 \\
+		0.000 & 0.000 & 0.000 & 597.000 & 265.000 & 1.000 & -484764.000 & -215180.000 & 812.000 \\
+		879.000 & 840.000 & 1.000 & 0.000 & 0.000 & 0.000 & -783189.000 & -748440.000 & 891.000 \\
+		0.000 & 0.000 & 0.000 & 879.000 & 840.000 & 1.000 & -1198956.000 & -1145760.000 & 1364.000 \\
+		889.000 & 919.000 & 1.000 & 0.000 & 0.000 & 0.000 & -804545.000 & -831695.000 & 905.000 \\
+		0.000 & 0.000 & 0.000 & 889.000 & 919.000 & 1.000 & -1298829.000 & -1342659.000 & 1461.000 \\
+		891.000 & 1014.000 & 1.000 & 0.000 & 0.000 & 0.000 & -821502.000 & -934908.000 & 922.000 \\
+		0.000 & 0.000 & 0.000 & 891.000 & 1014.000 & 1.000 & -1416690.000 & -1612260.000 & 1590.000 \end{bmatrix}.$$</div>
+                <div class="math">$$H=\begin{bmatrix}0.455497 & -0.128279 & 224.089115\\[4pt] -0.28823 & 0.422728 & 690.796348\\[4pt] -0.000283 & -0.000202 & 1\end{bmatrix}$$</div>
+            </div>
+			
+		</section>
+
+		<!-- A.3 -->
+		<section id="a3" class="section">
+			<h2>A.3: Warp the Images</h2>
+			<div class="deliverables">
+				<ul>
+					<li>Implement <code>warpImageNearestNeighbor(im, H)</code> and <code>warpImageBilinear(im, H)</code>
+						using inverse warping.</li>
+					<li>Apply to 2+ images for rectification. Show comparisons.</li>
+				</ul>
+			</div>
+
+			<div class="imggrid3">
+				<figure>
+					<img src="./media/Kitchen_1.jpg" alt="Original Image" />
+					<figcaption>Original Image</figcaption>
+				</figure>
+				<figure>
+					<img src="./media/warped_nn.png" alt="warp-nn" />
+					<figcaption>Nearest-neighbor warp</figcaption>
+				</figure>
+                <figure>
+                    <img src="./media/warped_bil.png" alt="warp-bil" />
+                    <figcaption>Bilinear warp</figcaption>
+                </figure>
+			</div>
+
+			<div class="note">
+				<p><strong>Timing comparison:</strong> Nearest-Neighbor Interpolation took 0.3948 sec. Bilinear Interpolation took 0.9436 sec.</p>
+				<p>Nearest-neighbor is faster because each valid output pixel requires a single sample from the source image, while bilinear sampling fetches four neighboring pixels and performs a weighted average, which increases computation. However, bilinear interpolation yields higher-quality results: it smooths transitions and reduces the jagged aliasing artifacts commonly seen with nearest-neighbor.</p>
+			</div>
+            <div class="imggrid2">
+                <figure>
+                    <img src="./media/NN.png" alt="NN" />
+                    <figcaption>NN (Aliasing)</figcaption>
+                </figure>
+                <figure>
+                    <img src="./media/Bilinear.png" alt="bil" />
+                    <figcaption>Bilinear</figcaption>
+                </figure>
+            </div>
+            <p><strong>Rectification: </strong></p>
+            <div class="image">
+                <img src="./media/Book.png" alt="rectified1" />
+                <figcaption>Book</figcaption>
+            </div>
+            <div class="image">
+                <img src="./media/Poster.png" alt="rectified2" />
+                <figcaption>Poster</figcaption>
+            </div>
+		</section>
+
+		<!-- A.4 -->
+		<section id="a4" class="section">
+			<h2>A.4: Blend the Images into a Mosaic</h2>
+			<div class="deliverables">
+				<ul>
+					<li>Show 3 mosaics with their source images.</li>
+					<li>Use weighted averaging or blending to reduce edge artifacts. Explain your blending procedure.</li>
+				</ul>
+			</div>
+			<div class="note">
+				<p><strong>Registration and Canvas Setup.</strong> For each pair, I solve for the homography \(H\) using the correspondences and then call <code>compute_combined_canvas_shape</code>. This function projects the four corners of the first image through \(H\), takes the min/max of both warped corners and the untouched second image, and returns a shared canvas size plus the pixel offset that recenters everything into non-negative coordinates.</p>
+				<p><strong>Inverse Warping with Alpha Support.</strong> I then call <code>warp_to_canvas_nearest_neighbor</code>(made a slight modification to <code>warpImageNearestNeighbor(im,H)</code>), which performs inverse mapping: for every pixel in the canvas, it transforms the coordinate back with \(H^{-1}\), samples the nearest pixel from image 1, and writes the color together with an alpha channel indicating valid samples. The second image is copied directly into the same canvas using the previously computed offset, creating two RGB layers and two boolean masks that mark where each view contributes.</p>
+				<p><strong>Distance-Transform Blending.</strong> The helper <code>blend_images_distance_transform</code> converts the masks into per-pixel weights with <code>scipy.ndimage.distance_transform_edt</code>. Formally, for each pixel \(\mathbf{x}\) I compute</p>
+				<div class="math">$$d_i(\mathbf{x}) = \operatorname{distance\_transform\_edt}(M_i)(\mathbf{x}), \quad i \in \{1,2\},$$</div>
+				<p>and normalize the distances into soft weights</p>
+				<div class="math">$$w_i(\mathbf{x}) = \frac{d_i(\mathbf{x})}{d_1(\mathbf{x}) + d_2(\mathbf{x}) + \varepsilon}, \quad \varepsilon = 10^{-5}.$$</div>
+				<p>The final mosaic is then obtained through a weighted sum</p>
+				<div class="math">$$I(\mathbf{x}) = w_1(\mathbf{x}) I_1(\mathbf{x}) + w_2(\mathbf{x}) I_2(\mathbf{x}).$$</div>
+				<p>Pixels far from a seam get weight close to 1 while those near overlaps share weight with the neighbor, which removes visible transitions and ghosting artifacts.</p>
+				<p><strong>Outputs.</strong> The pipeline writes intermediate diagnostics (<code>aligned_image.jpg</code>, <code>canvas.jpg</code>, <code>blended_image.jpg</code>) and renders the figures below. Each mosaic shown here follows the same steps but with different correspondences collected from my photos.</p>
+			</div>
+            <div class="image">
+                <img src="./media/output1.png" alt="mosaic1" />
+                <figcaption>Mosaic 1</figcaption>
+            </div>
+            <div class="image">
+                <img src="./media/output2.png" alt="mosaic2" />
+                <figcaption>Mosaic 2</figcaption>
+            </div>
+            <div class="image">
+                <img src="./media/output3.png" alt="mosaic3" />
+                <figcaption>Mosaic 3</figcaption>
+            </div>
+
+		</section>
+
+		<a class="back" href="../index.html">← Back to Course Home</a>
+
+	</div>
+</body>
+
+</html>
