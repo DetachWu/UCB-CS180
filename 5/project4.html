@@ -189,10 +189,14 @@
 					<li>For the first part of the assignment, I've taken a 3D scan of my own object which I would build a NeRF of later! To do this, I used visual tracking targets called ArUco tags, which provide a way to reliably detect the same 3D keypoints across different images. There are 2 parts: 1) calibrating my camera parameters, and 2) using them to estimate pose.</li>    
 				</ul>
 			</div>
-            <p>I captured 59 images of tags and 53 images of my Penguin toy from different angles, keeping the zoom the same.<br>
+            <p>I captured 59 images of tags and 53 images of my adapter and its box from different angles, keeping the zoom the same.<br>
             I used <code>cv2.getOptimalNewCameraMatrix()</code> to detect the ArUco marker in each captured image and used the known 3D corner positions together with the camera intrinsics to run <code>solvePnP</code>. This gave me the camera's rotation and translation for every image, which I converted into c2w matrices for NeRF.<br>
             Then I undistorted and cropped the images, updated the intrinsics, and packaged the images with poses into a standard NeRF dataset.</p>
-			<div class="imggrid2">
+			<div class="image">
+                <img src="./media/0_2.jpg" alt="Original image with ArUco tags" style="height: 300px;"/>
+                <figcaption>Original image with ArUco tags</figcaption>
+            </div>
+            <div class="imggrid2">
 				<figure>
 					<img src="./media/0_3_1.png" alt="im1" />
 					<figcaption>Viser visualization (view 1)</figcaption>
